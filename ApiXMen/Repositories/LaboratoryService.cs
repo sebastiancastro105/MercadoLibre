@@ -1,43 +1,42 @@
-﻿using Newtonsoft.Json;
+﻿using ApiXMen.Models;
+using ApiXMen.Models.Dtos;
+using Newtonsoft.Json;
 
 namespace ApiXMen.Repositories
 {
     public class LaboratoryService : ILaboratoryService
     {
+        private readonly ISqlService SqlService;
+
+        public LaboratoryService(ISqlService sqlService)
+        {
+            SqlService = sqlService;
+        }
         public async ValueTask<bool> DnaCheck(string dnaArray)
         {
-            int filas, columnas = 0;
+            bool resultTest = false;
+            var arrayData = await ProcessArray(dnaArray);
 
-
-            var dato = JsonConvert.SerializeObject(dnaArray);
-            var dato2 = JsonConvert.DeserializeObject<string[]>(dnaArray);
-
-            filas = dato2.Length;
-            columnas = dato2[0].Length;
-            string[,] matriz2 = new string[filas, columnas];
-
-
-            for (int i = 0; i < filas; i++)
-            {
-                for (int j = 0; j < columnas; j++)
-                {
-                    matriz2[i, j] = dato2[i].Substring(j, 1);
-                }
-            }
-
-
-            int conteoHorizontal = await ContarHorizontal(matriz2, filas, columnas);
-            int conteoVertical = await ContarVertical(matriz2, filas, columnas);
-            int conteoDiagonalDerecha = await ContarDiagonalDerecha(matriz2, filas, columnas);
-            int datoss = await ContarDiagonalizquierda(matriz2, filas, columnas);
-
-            Console.WriteLine($"El resultado es : {conteoHorizontal + conteoVertical + conteoDiagonalDerecha + datoss}");
+            int conteoHorizontal = await ContarHorizontal(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int conteoVertical = await ContarVertical(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int conteoDiagonalDerecha = await ContarDiagonalDerecha(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int datoss = await ContarDiagonalizquierda(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
             int sumCount = conteoHorizontal + conteoVertical + conteoDiagonalDerecha + datoss;
-            if (sumCount > 1)
-                return await ValueTask.FromResult(true);
-            else 
-                return await ValueTask.FromResult(false);
 
+            if (sumCount > 1)
+                resultTest = true;
+            else
+                resultTest = false;
+
+            DnaResult dnaResult = new DnaResult()
+            {
+                Id = Guid.NewGuid().ToString(),
+                DnaVerified = dnaArray,
+                TestResult = resultTest
+            };
+            await SqlService.SaveDnaResult(dnaResult);
+            
+            return await ValueTask.FromResult(resultTest);
         }
 
         private async ValueTask<int> ContarHorizontal(string[,] matriz, int filas, int columnas)
@@ -192,6 +191,34 @@ namespace ApiXMen.Repositories
 
             }
            return await ValueTask.FromResult(contadorGeneral);
+        }
+
+        private async ValueTask<DeserializedObjectDto> ProcessArray(string data)
+        {
+            int filas, columnas = 0;
+
+            var dato = JsonConvert.SerializeObject(data);
+            var dato2 = JsonConvert.DeserializeObject<string[]>(data);
+
+            filas = dato2.Length;
+            columnas = dato2[0].Length;
+            string[,] matriz2 = new string[filas, columnas];
+
+            for (int i = 0; i < filas; i++)
+            {
+                for (int j = 0; j < columnas; j++)
+                {
+                    matriz2[i, j] = dato2[i].Substring(j, 1);
+                }
+            }
+
+            DeserializedObjectDto DeserializedObjectDto = new DeserializedObjectDto()
+            {
+                Rows = filas,
+                Columns = columnas,
+                SerializedArray = matriz2
+            };
+            return await ValueTask.FromResult(DeserializedObjectDto);
         }
     }
 }

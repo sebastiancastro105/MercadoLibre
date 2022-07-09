@@ -1,6 +1,9 @@
+using ApiXMen.Models;
 using ApiXMen.Repositories;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
 
 // Add services to the container.
 
@@ -9,6 +12,9 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<ILaboratoryService,LaboratoryService>();
+builder.Services.AddScoped<ISqlService, SqlService>();
+builder.Services.AddDbContext<XMenContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection").ToString()));
 
 var app = builder.Build();
 
