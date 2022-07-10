@@ -17,17 +17,20 @@ namespace ApiXMen.Repositories
             bool resultTest = false;
             var arrayData = await ProcessArray(dnaArray);
 
-            int conteoHorizontal = await ContarHorizontal(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
-            int conteoVertical = await ContarVertical(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
-            int conteoDiagonalDerecha = await ContarDiagonalDerecha(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
-            int datoss = await ContarDiagonalizquierda(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
-            int sumCount = conteoHorizontal + conteoVertical + conteoDiagonalDerecha + datoss;
-
+            //Se recorreo vector en todas las direcciones y se suman las secuencias que coinciden con un mutante
+            int countHorizontal = await CountHorizontal(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int countUpright = await CountUpright(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int countRightDiagonal = await CountRightDiagonal(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int countLeftDiagonal = await CountLeftDiagonal(arrayData.SerializedArray, arrayData.Rows, arrayData.Columns);
+            int sumCount = countHorizontal + countUpright + countRightDiagonal + countLeftDiagonal;
+            
+            //Si la suma es mayor a 1 se asigna true ó false
             if (sumCount > 1)
                 resultTest = true;
             else
                 resultTest = false;
 
+            //Se crea objeto para ser almacenado en la base de datos
             DnaResult dnaResult = new DnaResult()
             {
                 Id = Guid.NewGuid().ToString(),
@@ -39,186 +42,171 @@ namespace ApiXMen.Repositories
             return await ValueTask.FromResult(resultTest);
         }
 
-        private async ValueTask<int> ContarHorizontal(string[,] matriz, int filas, int columnas)
+        private async ValueTask<int> CountHorizontal(string[,] data, int rows, int columns)
         {
-            string[] vectorAxu = new string[4];
-            int contadorGeneral = 0;
+            string[] auxVector = new string[4];
+            int generalCounter = 0;
 
-            for (int i = 0; i < filas; i++)
+            //Se recorreo matriz
+            for (int i = 0; i < rows; i++)
             {
-                for (int j = 0; j < columnas - 3; j++)
+                for (int j = 0; j < rows - 3; j++)
                 {
-                    vectorAxu[0] = matriz[i, j];
-                    vectorAxu[1] = matriz[i, j + 1];
-                    vectorAxu[2] = matriz[i, j + 2];
-                    vectorAxu[3] = matriz[i, j + 3];
+                    //Se asignan letras que estan horizontales
+                    auxVector[0] = data[i, j];
+                    auxVector[1] = data[i, j + 1];
+                    auxVector[2] = data[i, j + 2];
+                    auxVector[3] = data[i, j + 3];
 
-                    string aux = "";
-                    int count = 1;
+                    // Se valida si la las cuatro letras del vector son iguales
+                    int countSequence = await ValidateSequence(auxVector);
 
-                    for (int y = 0; y < 4; y++)
-                    {
-                        if (vectorAxu[y] == aux)
-                        {
-                            count++;
-                        }
-                        else
-                        {
-                            aux = vectorAxu[y];
-                            count = 1;
-                        }
-                    }
-
-                    if (count == 4)
-                        contadorGeneral++;
+                    //Si las cuatro letras son iguales se realiza el conteo
+                    if (countSequence == 4)
+                        generalCounter++;
                 }
-
             }
-            return await ValueTask.FromResult(contadorGeneral);
+            return await ValueTask.FromResult(generalCounter);
         }
 
-        private async ValueTask<int> ContarVertical(string[,] matriz, int filas, int columnas)
+        private async ValueTask<int> CountUpright(string[,] data, int rows, int columns)
         {
-            string[] vectorAxu = new string[4];
-            int contadorGeneral = 0;
+            string[] auxVector = new string[4];
+            int generalCounter = 0;
 
-            for (int i = 0; i < filas - 3; i++)
+            //Se recorreo matriz
+            for (int i = 0; i < rows - 3; i++)
             {
-                for (int j = 0; j < columnas; j++)
-                {
-                    vectorAxu[0] = matriz[i, j];
-                    vectorAxu[1] = matriz[i + 1, j];
-                    vectorAxu[2] = matriz[i + 2, j];
-                    vectorAxu[3] = matriz[i + 3, j];
+                for (int j = 0; j < columns; j++)
+                {   // se asignan al vector las lectras que estan verticales
+                    auxVector[0] = data[i, j];
+                    auxVector[1] = data[i + 1, j];
+                    auxVector[2] = data[i + 2, j];
+                    auxVector[3] = data[i + 3, j];
 
-                    string aux = "";
-                    int count = 1;
+                    // Se valida si la las cuatro letras del vector son iguales
+                    int countSequence = await ValidateSequence(auxVector);
 
-                    for (int y = 0; y < 4; y++)
-                    {
-                        if (vectorAxu[y] == aux)
-                        {
-                            count++;
-                        }
-                        else
-                        {
-                            aux = vectorAxu[y];
-                            count = 1;
-                        }
-                    }
-
-                    if (count == 4)
-                        contadorGeneral++;
+                    //Si las cuatro letras se realiza el conteo
+                    if (countSequence == 4)
+                        generalCounter++;
                 }
 
             }
-            return await ValueTask.FromResult(contadorGeneral);
+            return await ValueTask.FromResult(generalCounter);
         }
 
-        private async ValueTask<int> ContarDiagonalDerecha(string[,] matriz, int filas, int columnas)
+        private async ValueTask<int> CountRightDiagonal(string[,] data, int rows, int columns)
         {
 
-            string[] vectorAxu = new string[4];
-            int contadorGeneral = 0;
+            string[] auxVector = new string[4];
+            int generalCounter = 0;
 
-            for (int i = 0; i < filas - 3; i++)
+            // Se recorre matriz con las letras
+            for (int i = 0; i < rows - 3; i++)
             {
-                for (int j = 0; j < columnas - 3; j++)
+                for (int j = 0; j < columns - 3; j++)
                 {
-                    vectorAxu[0] = matriz[i, j];
-                    vectorAxu[1] = matriz[i + 1, j + 1];
-                    vectorAxu[2] = matriz[i + 2, j + 2];
-                    vectorAxu[3] = matriz[i + 3, j + 3];
+                    //Se llena un vector las letras que estan en la diagonal
+                    auxVector[0] = data[i, j];
+                    auxVector[1] = data[i + 1, j + 1];
+                    auxVector[2] = data[i + 2, j + 2];
+                    auxVector[3] = data[i + 3, j + 3];
 
-                    string aux = "";
-                    int count = 1;
+                    // Se valida si la las cuatro letras del vector son iguales
+                    int countSequence = await ValidateSequence(auxVector);
 
-                    for (int y = 0; y < 4; y++)
-                    {
-                        if (vectorAxu[y] == aux)
-                        {
-                            count++;
-                        }
-                        else
-                        {
-                            aux = vectorAxu[y];
-                            count = 1;
-                        }
-                    }
-
-                    if (count == 4)
-                        contadorGeneral++;
+                    //Se realiza conteo si las cuatro letras del vector son iguales.
+                    if (countSequence == 4)
+                        generalCounter++;
                 }
 
             }
-            return await ValueTask.FromResult(contadorGeneral);
+            return await ValueTask.FromResult(generalCounter);
         }
 
-        private async ValueTask<int> ContarDiagonalizquierda(string[,] matriz, int filas, int columnas)
+        private async ValueTask<int> CountLeftDiagonal(string[,] data, int rows, int columns)
         {
 
-            string[] vectorAxu = new string[4];
-            int contadorGeneral = 0;
-
-            for (int i = 0; i < filas - 3; i++)
+            string[] auxVector = new string[4];
+            int generalCounter = 0;
+            // Se recorre matriz de derecha a izquierda por las columnas
+            for (int i = 0; i < rows - 3; i++)
             {
-                for (int j = columnas - 1; j > 0 + 2; j--)
-                {
-                    vectorAxu[0] = matriz[i, j];
-                    vectorAxu[1] = matriz[i + 1, j - 1];
-                    vectorAxu[2] = matriz[i + 2, j - 2];
-                    vectorAxu[3] = matriz[i + 3, j - 3];
+                for (int j = columns - 1; j > 0 + 2; j--)
+                {   //Se llena un vector las letras que estan en la diagonal
+                    auxVector[0] = data[i, j];
+                    auxVector[1] = data[i + 1, j - 1];
+                    auxVector[2] = data[i + 2, j - 2];
+                    auxVector[3] = data[i + 3, j - 3];
 
-                    string aux = "";
-                    int count = 1;
-
-                    for (int y = 0; y < 4; y++)
-                    {
-                        if (vectorAxu[y] == aux)
-                        {
-                            count++;
-                        }
-                        else
-                        {
-                            aux = vectorAxu[y];
-                            count = 1;
-                        }
-                    }
-
-                    if (count == 4)
-                        contadorGeneral++;
+                    // Se valida si la las cuatro letras del vector son iguales
+                    int countSequence = await ValidateSequence(auxVector);
+       
+                    // si las letras son iguales se realiza el conteo.
+                    if (countSequence == 4)
+                        generalCounter++;
                 }
 
             }
-           return await ValueTask.FromResult(contadorGeneral);
+           return await ValueTask.FromResult(generalCounter);
         }
 
         private async ValueTask<DeserializedObjectDto> ProcessArray(string data)
         {
             int filas, columnas = 0;
 
-            var dato = JsonConvert.SerializeObject(data);
-            var dato2 = JsonConvert.DeserializeObject<string[]>(data);
+            //Se deserializa json recibido y se convierte a vector
+            var deserializeData = JsonConvert.DeserializeObject<string[]>(data);
 
-            filas = dato2.Length;
-            columnas = dato2[0].Length;
-            string[,] matriz2 = new string[filas, columnas];
+            //Se define dimesiones de la matriz
+            filas = deserializeData.Length;
+            columnas = deserializeData[0].Length;
+            string[,] arrayData = new string[filas, columnas];
 
+            //Se recorre el vector deserializado para separar las letras y almacenarlas en la matriz
             for (int i = 0; i < filas; i++)
             {
                 for (int j = 0; j < columnas; j++)
                 {
-                    matriz2[i, j] = dato2[i].Substring(j, 1);
+                    string auxiliary = deserializeData[i].Substring(j, 1).ToUpper();
+
+                    //Se valida que solo permita las letra T C G A
+                    if (auxiliary == "T" || auxiliary == "C" || auxiliary == "G" || auxiliary == "A")
+                        arrayData[i, j] = auxiliary;
+                    else
+                        throw new Exception("Las letras permitidas son A G C T");
                 }
             }
 
+            //Se crea una entidad con la matriz y sus dimensiones.
             DeserializedObjectDto DeserializedObjectDto = new DeserializedObjectDto()
             {
                 Rows = filas,
                 Columns = columnas,
-                SerializedArray = matriz2
+                SerializedArray = arrayData
             };
             return await ValueTask.FromResult(DeserializedObjectDto);
+        }
+
+        private async ValueTask<int> ValidateSequence(string[] sequence)
+        {
+            string aux = "";
+            int count = 1;
+            //se evalua si las cuatro letras del vector son iguales
+            for (int y = 0; y < 4; y++)
+            {
+                if (sequence[y] == aux)
+                {
+                    count++;
+                }
+                else
+                {
+                    aux = sequence[y];
+                    count = 1;
+                }
+            }
+            return await ValueTask.FromResult(count);
         }
     }
 }

@@ -55,7 +55,11 @@ namespace ApiXMen.Controllers
                     CountHumanDna++;
             }
 
-            ratio = countMutantDna / CountHumanDna;
+            if (CountHumanDna > 0)
+                ratio = countMutantDna / CountHumanDna;
+            else
+                ratio = countMutantDna;
+            
             var request = new { count_mutant_dna = (int)countMutantDna, count_human_dna = (int)CountHumanDna, ratio = MathF.Round(ratio,1)};
 
             string serializeObject = JsonConvert.SerializeObject(request);
