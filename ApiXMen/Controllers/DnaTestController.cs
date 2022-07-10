@@ -24,6 +24,7 @@ namespace ApiXMen.Controllers
         {
             try
             {
+                //Se valida el adn.
                 bool resultTest = await Laboratory.DnaCheck(dna);
 
                 if (resultTest)
