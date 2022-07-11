@@ -50,7 +50,7 @@ namespace ApiXMen.Repositories
             //Se recorreo matriz
             for (int i = 0; i < rows; i++)
             {
-                for (int j = 0; j < rows - 3; j++)
+                for (int j = 0; j < columns - 3; j++)
                 {
                     //Se asignan letras que estan horizontales
                     auxVector[0] = data[i, j];
@@ -154,20 +154,20 @@ namespace ApiXMen.Repositories
 
         private async ValueTask<DeserializedObjectDto> ProcessArray(string data)
         {
-            int filas, columnas = 0;
+            int rows, columns = 0;
 
             //Se deserializa json recibido y se convierte a vector
             var deserializeData = JsonConvert.DeserializeObject<string[]>(data);
 
             //Se define dimesiones de la matriz
-            filas = deserializeData.Length;
-            columnas = deserializeData[0].Length;
-            string[,] arrayData = new string[filas, columnas];
+            rows = deserializeData.Length;
+            columns = deserializeData[0].Length;
+            string[,] arrayData = new string[rows, columns];
 
             //Se recorre el vector deserializado para separar las letras y almacenarlas en la matriz
-            for (int i = 0; i < filas; i++)
+            for (int i = 0; i < rows; i++)
             {
-                for (int j = 0; j < columnas; j++)
+                for (int j = 0; j < columns; j++)
                 {
                     string auxiliary = deserializeData[i].Substring(j, 1).ToUpper();
 
@@ -182,8 +182,8 @@ namespace ApiXMen.Repositories
             //Se crea una entidad con la matriz y sus dimensiones.
             DeserializedObjectDto DeserializedObjectDto = new DeserializedObjectDto()
             {
-                Rows = filas,
-                Columns = columnas,
+                Rows = rows,
+                Columns = columns,
                 SerializedArray = arrayData
             };
             return await ValueTask.FromResult(DeserializedObjectDto);
